@@ -19,14 +19,14 @@ public class JwtAuthEntryPoint implements AuthenticationEntryPoint {
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json; charset=UTF-8");
 
+
         if (authException instanceof BadCredentialsException) {
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
-            ErrorObject errorObject  = new ErrorObject(HttpStatus.UNAUTHORIZED.value(), "Thông tin đăng nhập không chính xác");
+            ErrorObject errorObject = new ErrorObject(HttpStatus.UNAUTHORIZED.value(), "Thông tin đăng nhập không chính xác");
             response.getWriter().write(new ObjectMapper().writeValueAsString(errorObject));
-        }
-        else {
+        } else {
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
-            ErrorObject errorObject  = new ErrorObject(HttpStatus.UNAUTHORIZED.value(), authException.getMessage());
+            ErrorObject errorObject = new ErrorObject(HttpStatus.UNAUTHORIZED.value(), authException.getMessage());
             response.getWriter().write(new ObjectMapper().writeValueAsString(errorObject));
         }
     }

@@ -1,47 +1,39 @@
 package org.kltn.postconnector.api.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.AssertTrue;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.Getter;
 import org.kltn.postconnector.api.enums.OrderType;
-import org.springframework.util.StringUtils;
 
-import java.util.List;
+import java.util.*;
 
 @Data
 @Getter
 public class OrderDTO {
 
-    @NotBlank(message = "Hãy chọn Phục vụ tại nhà hàng hay Ship")
-    private String type;
+    @NotNull(message = "Hãy chọn Phục vụ tại nhà hàng hay Ship")
+    private OrderType type;
 
     private String address;
 
-    @JsonProperty(value = "shipping_fee")
     private Float shippingFee;
 
-    @JsonProperty(value = "table_id")
-    private Byte tableId;
+    private Set<Integer> tableIds = new HashSet<>();
 
-    private List<OrderItemDTO> items;
+    private List<OrderItemDTO> items = new ArrayList<>();
 
-    @AssertTrue(message = "Thông tin đơn hàng không hợp lệ!")
+    @AssertTrue(message = "Thông tin tạo hóa đơn không hợp lệ!")
     public boolean isValid() {
-            if(OrderType.isValidType(this.type)) {
-                OrderType orderType = OrderType.valueOf(type);
-                if (orderType == OrderType.DINE_IN) {
-                    return tableId != null;
-                }
+        if (type == OrderType.DINE_IN) {
+            return !tableIds.isEmpty();
+        }
 
-                if (orderType == OrderType.DELIVERY) {
-                    return (StringUtils.hasText(address) && shippingFee != null && shippingFee >= 0);
-                }
-                return false;
-            }
-            else {
-               return false;
-            }
+        if (type == OrderType.DELIVERY) {
+            return (address != null && !address.isBlank() && shippingFee != null && shippingFee >= 0);
+        }
+        return false;
     }
+
+
 }

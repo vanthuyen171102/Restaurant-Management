@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 @Builder
 public class ResponseObject<T> {
-    private  int code;
+    private int code;
     private String message;
-    private  T data;
+    private T data;
 }

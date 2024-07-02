@@ -1,6 +1,6 @@
 package org.kltn.postconnector.api.controller;
 
-import org.kltn.postconnector.api.model.TimeLine;
+import org.kltn.postconnector.api.domain.TimeLine;
 import org.kltn.postconnector.api.payload.response.ResponseObject;
 import org.kltn.postconnector.api.service.TimeLineService;
 import org.springframework.http.HttpStatus;

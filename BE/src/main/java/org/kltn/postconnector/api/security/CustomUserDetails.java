@@ -1,9 +1,6 @@
 package org.kltn.postconnector.api.security;
 
-import lombok.Getter;
-import lombok.Setter;
-import org.kltn.postconnector.api.model.Employee;
-import org.kltn.postconnector.api.model.UserEntity;
+import org.kltn.postconnector.api.domain.Employee;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,38 +10,26 @@ import java.util.Collections;
 
 public class CustomUserDetails implements UserDetails {
 
-    private final UserEntity userEntity;
+    private final Employee employee;
 
-    @Getter
-    @Setter
-    private String avatar = "";
 
-    @Getter
-    @Setter
-    private String fullName = "";
-
-    public CustomUserDetails(UserEntity userEntity) {
-        this.userEntity = userEntity;
-        Employee employee  = userEntity.getEmployee();
-        if(employee != null) {
-            this.avatar = employee.getAvatar().getName();
-            this.fullName = employee.getFullName();
-        }
+    public CustomUserDetails(Employee employee) {
+        this.employee = employee;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singleton(new SimpleGrantedAuthority(userEntity.getRole().toString()));
+        return Collections.singleton(new SimpleGrantedAuthority(employee.getRole().getName()));
     }
 
     @Override
     public String getPassword() {
-        return userEntity.getPassword();
+        return employee.getPassword();
     }
 
     @Override
     public String getUsername() {
-        return userEntity.getUsername();
+        return employee.getEmail();
     }
 
     @Override
@@ -54,7 +39,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return !employee.getBlocked();
     }
 
     @Override

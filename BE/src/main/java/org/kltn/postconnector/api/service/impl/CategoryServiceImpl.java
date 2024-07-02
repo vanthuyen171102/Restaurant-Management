@@ -1,35 +1,22 @@
 package org.kltn.postconnector.api.service.impl;
 
+import lombok.RequiredArgsConstructor;
+import org.kltn.postconnector.api.constants.Constants;
+import org.kltn.postconnector.api.domain.Category;
 import org.kltn.postconnector.api.dto.CategoryDTO;
+import org.kltn.postconnector.api.exception.BadRequestException;
 import org.kltn.postconnector.api.exception.ResourceNotFoundException;
-import org.kltn.postconnector.api.model.Category;
 import org.kltn.postconnector.api.repository.CategoryRepository;
 import org.kltn.postconnector.api.service.CategoryService;
-import org.kltn.postconnector.api.utils.ImageUtil;
-import org.kltn.postconnector.api.utils.StringUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.time.Instant;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
-    private final ImageUtil imageUtil;
-
-    @Autowired
-    public CategoryServiceImpl(CategoryRepository categoryRepository, ImageUtil imageUtil) {
-        this.categoryRepository = categoryRepository;
-        this.imageUtil = imageUtil;
-    }
-
-    @Override
-    public boolean isSlugExist(String slug) {
-        return categoryRepository.findBySlug(slug).isPresent();
-    }
 
     @Override
     public List<Category> getAll() {
@@ -43,15 +30,11 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Category getBySlug(String slug) {
-        return categoryRepository.findBySlug(slug)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục muốn tìm"));
-    }
-
-    @Override
     public Category create(CategoryDTO categoryDTO) {
-        Category category = new Category();
-        mapDTOToEntity(category, categoryDTO);
+        if (!categoryRepository.findAllByTitle(categoryDTO.getTitle()).isEmpty()) {
+            throw new BadRequestException("Tên danh mục %s đã tồn tại!".formatted(categoryDTO.getTitle()));
+        }
+        Category category = new Category(categoryDTO.getTitle());
         return categoryRepository.save(category);
     }
 
@@ -60,7 +43,10 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục muốn sửa!"));
 
-        mapDTOToEntity(category, categoryDTO);
+        if (!category.getTitle().equals(categoryDTO.getTitle()) && !categoryRepository.findAllByTitle(categoryDTO.getTitle()).isEmpty()) {
+            throw new BadRequestException("Tên danh mục %s đã được sử dụng!".formatted(categoryDTO.getTitle()));
+        }
+        category.setTitle(categoryDTO.getTitle());
         return categoryRepository.save(category);
     }
 
@@ -69,6 +55,10 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục muốn xóa!"));
 
+        if (category.getTitle().equals(Constants.UNCATEGORY_TITLE)) {
+            throw new BadRequestException("Không thể xóa danh mục 'Chưa phân loại'");
+        }
+
         categoryRepository.deleteById(categoryId);
     }
 
@@ -76,27 +66,5 @@ public class CategoryServiceImpl implements CategoryService {
 
         // Gán thông tin danh mục
         category.setTitle(categoryDTO.getTitle());
-        category.setSummary(categoryDTO.getSummary());
-        category.setDisable(categoryDTO.getDisable());
-
-        // Xử lý Slug
-        String slug = StringUtil.generateSlug(category.getTitle());
-        // Nếu slug mới # slug cũ
-        if (!slug.equals(category.getSlug())) {
-            if (isSlugExist(slug)) {
-                slug += "-" + Instant.now().getEpochSecond();
-            }
-            category.setSlug(slug);
-        }
-
-        //Xử lý ảnh
-        if (categoryDTO.getThumbFile() != null) {
-            try {
-                category.setThumb(imageUtil.storeImage(categoryDTO.getThumbFile()));
-                System.out.println(category.getThumb());
-            } catch (IOException ex) {
-                category.setThumb(null);
-            }
-        }
     }
 }

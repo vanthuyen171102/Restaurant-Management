@@ -1,10 +1,11 @@
 package org.kltn.postconnector.api.utils;
 
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import io.jsonwebtoken.security.SignatureException;
-import org.kltn.postconnector.api.exception.JwtValidationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -12,6 +13,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
+import java.time.Instant;
 import java.util.Date;
 
 @Component
@@ -20,7 +22,7 @@ public class JwtUtil {
     private String jwtSecret;
 
     @Value("${jwt.expirationMs}")
-    private int jwtExpirationMs;
+    private long jwtExpirationMs;
 
     public String generateToken(Authentication authentication) {
         String username = authentication.getName();
@@ -52,16 +54,14 @@ public class JwtUtil {
         return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
     }
 
-    public boolean validateToken(String token) throws JwtValidationException  {
+    public boolean validateToken(String token) throws JwtException {
         try {
-            Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJws(token);
-            return true;
-        } catch (ExpiredJwtException ex) {
-            throw new JwtValidationException("Phiên đăng nhập đã kết thúc!");
-        } catch (UnsupportedJwtException | MalformedJwtException | SignatureException | IllegalArgumentException ex) {
-            throw new JwtValidationException("Chuỗi xác thực không hợp lệ!");
-        } catch (Exception ex) {
-            throw new JwtValidationException("Unexpected error during JWT validation");
+            Claims claims = Jwts.parserBuilder().setSigningKey(jwtSecret).build().parseClaimsJws(token).getBody();
+            Instant now = Instant.now();
+            Date exp = claims.getExpiration();
+            return exp.after(Date.from(now));
+        } catch (JwtException e) {
+            return false;
         }
     }
 }

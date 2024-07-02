@@ -1,36 +1,41 @@
 package org.kltn.postconnector.api.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
 
 @Data
-
 public class ItemDTO {
     private MultipartFile thumbFile;
 
     @NotBlank(message = "Tên món ăn không được để trống!")
     private String title;
 
-    @NotBlank(message = "Mô tả ngắn về món ăn không được để trống!")
-    private String summary;
-
-    private String recipe;
-
-    private String instructions;
-
-    @NotNull(message = "Giá sản phẩm không được để trống!")
+    @NotNull(message = "Giá món ăn không được để trống!")
+    @Min(value = 0, message = "Giá món ăn >= 0")
     private Float price;
 
+    @NotNull(message = "Giá gốc món ăn không được để trống!")
+    @Min(value = 0, message = "Giá gốc món ăn >= 0")
+    private Float capitalPrice;
+
     @NotNull(message = "Danh mục món ăn không được để trống!")
-    @JsonProperty("cat_id")
     private Integer catId;
 
-    @NotNull(message = "Hãy chọn giá trị cho trường Disable!")
-    private Boolean disable;
+    public ItemDTO() {
+    }
 
-    private Float discount;
+    public ItemDTO(MultipartFile thumbFile, String title, Float price, Integer catId, Float capitalPrice) {
+        this.thumbFile = thumbFile;
+        this.title = title.trim();
+        this.price = price;
+        this.catId = catId;
+        this.capitalPrice = capitalPrice;
+    }
 
+    public boolean isProfitValid() {
+        return capitalPrice == null || price == null || capitalPrice <= price;
+    }
 }

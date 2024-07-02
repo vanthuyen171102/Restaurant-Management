@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 public enum TableStatus {
     READY,
     USING,
+    UNAVAILABLE,
     BOOKED;
 
 }

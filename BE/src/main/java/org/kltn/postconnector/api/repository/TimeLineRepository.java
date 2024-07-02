@@ -1,6 +1,6 @@
 package org.kltn.postconnector.api.repository;
 
-import org.kltn.postconnector.api.model.TimeLine;
+import org.kltn.postconnector.api.domain.TimeLine;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.sql.Time;

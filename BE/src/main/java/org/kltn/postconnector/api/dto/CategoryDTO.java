@@ -1,19 +1,21 @@
 package org.kltn.postconnector.api.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
-import org.springframework.web.multipart.MultipartFile;
 
 @Data
 public class CategoryDTO {
-    private MultipartFile thumbFile;
-
     @NotBlank(message = "Tên danh mục không được để trống!")
+    @Size(max = 40, message = "Tên danh mục quá dài ( <= 40 ký tự)!")
     private String title;
 
-    private String summary;
+    public CategoryDTO() {
+    }
 
-    @NotNull(message = "Hãy chọn giá trị trường Disable!")
-    private Boolean disable;
+    ;
+
+    public CategoryDTO(String title) {
+        this.title = title.trim();
+    }
 }

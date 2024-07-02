@@ -1,23 +1,23 @@
 package org.kltn.postconnector.api.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
-import lombok.RequiredArgsConstructor;
+import org.kltn.postconnector.api.domain.Order;
 import org.kltn.postconnector.api.dto.OrderDTO;
 import org.kltn.postconnector.api.dto.OrderItemDTO;
-import org.kltn.postconnector.api.model.Order;
-import org.kltn.postconnector.api.payload.response.PagedOrderResponse;
-import org.kltn.postconnector.api.payload.response.ResponseObject;
+import org.kltn.postconnector.api.payload.response.PagedResponse;
 import org.kltn.postconnector.api.service.OrderService;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/order")
+@RequestMapping("/api/v1")
 public class OrderController {
 
     private final OrderService orderService;
@@ -26,70 +26,61 @@ public class OrderController {
         this.orderService = orderService;
     }
 
-    @GetMapping()
-    public ResponseEntity<ResponseObject<PagedOrderResponse>> getPagedOrder(@RequestParam(name = "page", defaultValue = "1") @Min(1) int page,
-                                                                            @RequestParam(name = "limit", defaultValue = "10") @Min(5) int limit) {
-        return ResponseEntity.ok(ResponseObject.<PagedOrderResponse>builder()
-                .code(HttpStatus.OK.value())
-                .data(orderService.getPagedOrder(page, limit))
-                .build());
+    @GetMapping("/orders")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'CASHIER')")
+    public PagedResponse<Order> getPagedOrder(@RequestParam(name = "page", defaultValue = "1") @Min(1) int page,
+                                              @RequestParam(name = "limit", defaultValue = "10") @Min(5) @Max(20) int limit) {
+        Page<Order> pagedOrder = orderService.getPagedOrder(page, limit);
+        return PagedResponse.<Order>builder()
+                .total(pagedOrder.getTotalElements())
+                .currentPage(pagedOrder.getNumber() + 1)
+                .totalPage(pagedOrder.getTotalPages())
+                .items(pagedOrder.getContent())
+                .build();
     }
 
-    @GetMapping("{id}")
-    public ResponseEntity<ResponseObject<Order>> getOrder(@PathVariable(value = "id") long orderId) {
-        return ResponseEntity.ok(ResponseObject.<Order>builder()
-                .code(HttpStatus.OK.value())
-                .data(orderService.getById(orderId))
-                .build());
+    @GetMapping("/order/get-all-in-progress-order")
+    @PreAuthorize("isAuthenticated()")
+    public List<Order> getInProgressOrder() {
+        return orderService.getAllInProgressOrder();
     }
 
-    @GetMapping("/complete/{orderItemId}")
-    public ResponseEntity<ResponseObject<Order>> completeOrderItem(@PathVariable(value = "orderItemId") long orderItemId) {
-        return ResponseEntity.ok(ResponseObject.<Order>builder()
-                .code(HttpStatus.OK.value())
-                .message("Đã hoàn thành món ăn!")
-                .data(orderService.getById(orderItemId))
-                .build());
+    @GetMapping("/order/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'CASHIER')")
+    public Order getOrder(@PathVariable(value = "id") int orderId) {
+        return orderService.getById(orderId);
+    }
+
+    @PostMapping("/order/complete/{orderItemId}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'KITCHEN')")
+    public void completeOrderItem(@PathVariable(value = "orderItemId") int orderItemId) {
+        orderService.completeOrderItem(orderItemId);
+    }
+
+    @PostMapping("/order/cancel/{orderItemId}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'KITCHEN')")
+    public void cancelOrderItem(@PathVariable(value = "orderItemId") int orderItemId) {
+        orderService.cancelOrderItem(orderItemId);
     }
 
 
-    @PostMapping()
+    @PostMapping("/order/create")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<ResponseObject<Order>> createOrder(@Valid @RequestBody OrderDTO orderDTO) {
-        return ResponseEntity.ok(ResponseObject.<Order>builder()
-                .code(HttpStatus.CREATED.value())
-                        .message("Tạo hóa đơn thành công!")
-                .data(orderService.create(orderDTO))
-                .build());
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'CASHIER','WAITER')")
+    public Order createOrder(@Valid @RequestBody OrderDTO orderDTO) {
+        return orderService.create(orderDTO);
     }
 
-    @PostMapping("/addItems/{orderId}")
-    public ResponseEntity<ResponseObject<Order>> addItemsToOrder(@NotEmpty(message = "Danh sách món ăn thêm vào không được rỗng") @RequestBody
-                                                                         List<OrderItemDTO> orderItems, @PathVariable("orderId") long orderId) {
-        return ResponseEntity.ok(ResponseObject.<Order>builder()
-                .code(HttpStatus.OK.value())
-                .message("Thêm món ăn vào hóa đơn thành công!")
-                .data(orderService.addItemsToOrder(orderItems, orderId))
-                .build());
+    @PostMapping("/order/addItems/{orderId}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'CASHIER','WAITER')")
+    public Order addItemsToOrder(@NotEmpty(message = "Danh sách món ăn thêm vào không được rỗng!") @RequestBody
+                                 List<OrderItemDTO> orderItems, @PathVariable("orderId") int orderId) {
+        return orderService.addItemsToOrder(orderItems, orderId);
     }
 
 
-    @PutMapping("{orderId}")
-    public ResponseEntity<ResponseObject<Order>> updateOrder(@Valid @RequestBody OrderDTO orderDTO, @PathVariable("orderId") long orderId) {
-        return ResponseEntity.ok(ResponseObject.<Order>builder()
-                .code(HttpStatus.OK.value())
-                .message("Sửa hóa đơn thành công!")
-                .data(orderService.update(orderDTO, orderId))
-                .build());
-    }
-
-    @DeleteMapping("{orderId}")
-    public ResponseEntity<?> deleteEmployee(@PathVariable("orderId") long orderId) {
+    @DeleteMapping("/order/{orderId}")
+    public void deleteOrder(@PathVariable("orderId") int orderId) {
         orderService.delete(orderId);
-
-        return ResponseEntity.ok(ResponseObject.<Order>builder()
-                .code(HttpStatus.OK.value())
-                .message("Xóa hóa đơn thành công!")
-                .build());
     }
 }

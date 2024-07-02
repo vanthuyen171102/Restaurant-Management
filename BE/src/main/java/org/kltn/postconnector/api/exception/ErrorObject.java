@@ -9,7 +9,11 @@ public class ErrorObject {
     private Integer code;
     private String message;
 
-    public ErrorObject() {};
+    public ErrorObject() {
+    }
+
+    ;
+
     public ErrorObject(Integer code, String message) {
         this.code = code;
         this.message = message;

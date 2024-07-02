@@ -5,7 +5,6 @@ import org.kltn.postconnector.api.dto.LoginDTO;
 import org.kltn.postconnector.api.payload.response.LoginResponse;
 import org.kltn.postconnector.api.security.CustomUserDetails;
 import org.kltn.postconnector.api.service.AuthService;
-import org.kltn.postconnector.api.service.UserService;
 import org.kltn.postconnector.api.utils.JwtUtil;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,8 +15,6 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
-
-    private final UserService userService;
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
@@ -38,6 +35,6 @@ public class AuthServiceImpl implements AuthService {
 
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
-        return new LoginResponse(userDetails.getAvatar(), userDetails.getFullName(), token);
+        return new LoginResponse(token);
     }
 }

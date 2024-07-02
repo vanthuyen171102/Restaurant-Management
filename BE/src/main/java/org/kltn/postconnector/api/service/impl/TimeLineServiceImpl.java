@@ -1,6 +1,6 @@
 package org.kltn.postconnector.api.service.impl;
 
-import org.kltn.postconnector.api.model.TimeLine;
+import org.kltn.postconnector.api.domain.TimeLine;
 import org.kltn.postconnector.api.repository.TimeLineRepository;
 import org.kltn.postconnector.api.service.TimeLineService;
 import org.springframework.beans.factory.annotation.Autowired;

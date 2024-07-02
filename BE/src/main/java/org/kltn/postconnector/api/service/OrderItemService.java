@@ -1,16 +1,16 @@
 package org.kltn.postconnector.api.service;
 
+import org.kltn.postconnector.api.domain.OrderItem;
 import org.kltn.postconnector.api.enums.OrderItemStatus;
-import org.kltn.postconnector.api.model.OrderItem;
 
 import java.util.List;
 
 public interface OrderItemService {
-    List<OrderItem> getAllByOrderId(long orderId);
+    List<OrderItem> getAllByOrderId(int orderId);
 
-    void delete(long orderItemId);
+    void delete(int orderItemId);
 
-    OrderItem updateStatus(long orderItemId, OrderItemStatus status);
+    OrderItem updateStatus(int orderItemId, OrderItemStatus status);
 
-    void deleteAllByOrderId(long orderId);
+    void deleteAllByOrderId(int orderId);
 }

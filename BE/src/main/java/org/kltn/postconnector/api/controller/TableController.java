@@ -1,69 +1,102 @@
 package org.kltn.postconnector.api.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import lombok.RequiredArgsConstructor;
+import org.kltn.postconnector.api.domain.Order;
+import org.kltn.postconnector.api.domain.TableEntity;
+import org.kltn.postconnector.api.dto.SaveReservationsRequest;
 import org.kltn.postconnector.api.dto.TableDTO;
-import org.kltn.postconnector.api.model.Order;
-import org.kltn.postconnector.api.model.TableEntity;
-import org.kltn.postconnector.api.payload.response.ResponseObject;
+import org.kltn.postconnector.api.payload.response.PagedResponse;
 import org.kltn.postconnector.api.service.TableService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/table")
+@RequiredArgsConstructor
+@RequestMapping("/api/v1")
 public class TableController {
     private final TableService tableService;
 
-    @Autowired
-    public TableController(TableService tableService) {
-        this.tableService = tableService;
+
+    @GetMapping("/tables/all")
+    @PreAuthorize("isAuthenticated()")
+    public List<TableEntity> getAll(@RequestParam(required = false, defaultValue = "") String date) {
+        LocalDate currentDate = LocalDate.now();
+        if (!date.isEmpty()) {
+            currentDate = LocalDate.parse(date);
+        }
+        return tableService.getAll(currentDate);
     }
 
-    @GetMapping()
-    public ResponseEntity<ResponseObject<List<TableEntity>>> getAllTable() {
-        return ResponseEntity.ok(ResponseObject.<List<TableEntity>>builder()
-                .code(HttpStatus.OK.value())
-                .data(tableService.getAll())
-                .build());
+    @GetMapping("/tables")
+    @PreAuthorize("isAuthenticated()")
+    public PagedResponse<TableEntity> getPagedTables(@RequestParam(required = false, defaultValue = "") String date,
+                                            @RequestParam(name = "page", defaultValue = "1") @Min(1) int page,
+                                            @RequestParam(name = "limit", defaultValue = "10") @Min(5) @Max(20) int limit) {
+        LocalDate currentDate = LocalDate.now();
+        if (!date.isEmpty()) {
+            currentDate = LocalDate.parse(date);
+        }
+
+        Page<TableEntity> pagedTable = tableService.getPagedTable(currentDate,page, limit);
+        return PagedResponse.<TableEntity>builder()
+                .total(pagedTable.getTotalElements())
+                .currentPage(pagedTable.getNumber() + 1)
+                .totalPage(pagedTable.getTotalPages())
+                .items(pagedTable.getContent())
+                .build();
     }
 
-    @GetMapping("{id}")
-    public ResponseEntity<ResponseObject<TableEntity>> getTable(@PathVariable(value = "id") byte id) {
-        return ResponseEntity.ok(ResponseObject.<TableEntity>builder()
-                .code(HttpStatus.OK.value())
-                .data(tableService.getById(id))
-                .build());    }
+    @GetMapping("/tables/tables-have-order")
+    @PreAuthorize("isAuthenticated()")
+    public List<TableEntity> getTablesHaveOrder() {
+        return tableService.getTableHaveOrder();
+    }
 
-    @PostMapping()
+
+    @GetMapping("/table/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public TableEntity getTable(@PathVariable(value = "id") int id) {
+        return tableService.getById(id);
+    }
+
+    @PostMapping("/table/create")
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<ResponseObject<TableEntity>> createTable(@Valid @RequestBody TableDTO tableDTO) {
-        return ResponseEntity.ok(ResponseObject.<TableEntity>builder()
-                .code(HttpStatus.CREATED.value())
-                        .message("Thêm bàn thành công!")
-                .data(tableService.create(tableDTO))
-                .build());
+    public TableEntity createTable(@Valid @RequestBody TableDTO tableDTO) {
+        return tableService.create(tableDTO);
     }
 
-    @PutMapping("{id}")
-    public ResponseEntity<ResponseObject<?>> updateTable(@Valid @RequestBody TableDTO tableDTO, @PathVariable("id") byte id) {
-        return ResponseEntity.ok(ResponseObject.<TableEntity>builder()
-                .code(HttpStatus.OK.value())
-                        .message("Sửa thông tin bàn thành công!")
-                .data(tableService.update(tableDTO, id))
-                .build());
+
+    @PutMapping("/table/update/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
+    public TableEntity updateTable(@Valid @RequestBody TableDTO tableDTO, @PathVariable(value = "id") int id) {
+        return tableService.update(tableDTO, id);
     }
 
-    @DeleteMapping("{id}")
-    public ResponseEntity<?> deleteTable(@PathVariable("id") byte id) {
+    @DeleteMapping("/table/delete/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
+    public void deleteTable(@PathVariable("id") int id) {
         tableService.delete(id);
+    }
 
-        return ResponseEntity.ok(ResponseObject.<Order>builder()
-                .code(HttpStatus.OK.value())
-                .message("Xóa bàn thành công!")
-                .build());
+    @PostMapping("/table/return-table/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WAITER', 'CASHIER')")
+    public void returnTable(@PathVariable(value = "id") int id) {
+        tableService.returnTable(id);
+    }
+
+    @PostMapping("/table/save-reservations/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'CASHIER')")
+    public TableEntity saveReservations(@PathVariable int id,
+                                        @RequestBody SaveReservationsRequest saveReservationsRequest) {
+        return tableService.saveReservations(id, saveReservationsRequest);
     }
 }

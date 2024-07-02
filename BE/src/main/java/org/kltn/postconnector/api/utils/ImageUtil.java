@@ -2,9 +2,8 @@ package org.kltn.postconnector.api.utils;
 
 import org.kltn.postconnector.api.exception.BadRequestException;
 import org.kltn.postconnector.api.exception.ResourceNotFoundException;
-import org.kltn.postconnector.api.model.Image;
-import org.kltn.postconnector.api.service.ImageService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Component;
@@ -21,11 +20,11 @@ import java.util.List;
 @Component
 public class ImageUtil {
 
-    private final ImageService imageService;
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
     private final Path imageStorageLocation;
 
-    @Autowired
-    public ImageUtil(ImageService imageService) {
+    public ImageUtil() {
         // Tạo thư mục lưu trữ ảnh ( nếu chưa tồn tại )
         this.imageStorageLocation = Path.of("src/main/resources/static/images").toAbsolutePath().normalize();
         try {
@@ -34,7 +33,6 @@ public class ImageUtil {
             throw new RuntimeException("Không thể tạo thư mục lưu trữ ảnh!", e);
         }
 
-        this.imageService = imageService;
     }
 
 
@@ -63,15 +61,20 @@ public class ImageUtil {
         return extensions.contains(fileExtension.toLowerCase());
     }
 
-    public  Image storeImage(MultipartFile file) throws IOException {
-        // Validate ảnh
-        validateImage(file);
-        String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-        Path targetLocation = this.imageStorageLocation.resolve(fileName);
-        Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+    public String storeImage(MultipartFile file) {
+        try {
 
-        // Lưu ảnh tên ảnh vào CSDL để quản lý
-        return imageService.create(fileName);
+            // Validate ảnh
+            validateImage(file);
+            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+            Path targetLocation = this.imageStorageLocation.resolve(fileName);
+            Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+            return fileName;
+
+        } catch (IOException e) {
+            logger.warn("Lưu ảnh không thành công!");
+            return null;
+        }
     }
 
     public Resource loadImageAsResource(String fileName) throws MalformedURLException {

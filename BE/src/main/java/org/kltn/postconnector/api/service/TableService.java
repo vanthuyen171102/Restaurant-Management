@@ -1,19 +1,29 @@
 package org.kltn.postconnector.api.service;
 
+import org.kltn.postconnector.api.domain.TableEntity;
+import org.kltn.postconnector.api.dto.SaveReservationsRequest;
 import org.kltn.postconnector.api.dto.TableDTO;
-import org.kltn.postconnector.api.model.TableEntity;
+import org.springframework.data.domain.Page;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface TableService {
 
-    List<TableEntity> getAll() ;
+    List<TableEntity> getAll(LocalDate date);
 
-    TableEntity getById(byte tableId);
+    Page<TableEntity> getPagedTable(LocalDate date, int page, int limit);
+    TableEntity getById(int tableId);
+
+    List<TableEntity> getTableHaveOrder();
 
     TableEntity create(TableDTO tableDTO);
 
-    TableEntity update(TableDTO tableDTO, byte tableId);
+    TableEntity update(TableDTO tableDTO, int tableId);
 
-    void delete(byte tableId);
+    void returnTable(int tableId);
+
+    void delete(int tableId);
+
+    TableEntity saveReservations(int id, SaveReservationsRequest saveReservationsRequest);
 }

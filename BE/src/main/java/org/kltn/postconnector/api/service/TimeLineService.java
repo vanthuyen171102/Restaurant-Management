@@ -1,6 +1,6 @@
 package org.kltn.postconnector.api.service;
 
-import org.kltn.postconnector.api.model.TimeLine;
+import org.kltn.postconnector.api.domain.TimeLine;
 
 import java.sql.Time;
 import java.util.List;

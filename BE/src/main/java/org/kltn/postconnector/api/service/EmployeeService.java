@@ -1,20 +1,29 @@
 package org.kltn.postconnector.api.service;
 
+import org.kltn.postconnector.api.domain.Employee;
 import org.kltn.postconnector.api.dto.EmployeeDTO;
-import org.kltn.postconnector.api.model.Employee;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
 public interface EmployeeService {
 
-    List<Employee> getAll() ;
+    List<Employee> getAll();
+
+    Page<Employee> getPagedEmployee(int page);
 
     Employee getById(int employeeId);
 
-    Employee create(EmployeeDTO employeeDTO);
+    Employee getByEmail(String email);
 
-    Employee update(EmployeeDTO employeeDTO, int employeeId);
+    Employee create(EmployeeDTO.Create createEmployeeRequest);
+
+    Employee update(EmployeeDTO.Update updateEmployeeRequest, int employeeId);
 
     void delete(int employeeId);
+
+    void block(int employeeId);
+
+    void unBlock(int employeeId);
 
 }

@@ -2,15 +2,17 @@ package org.kltn.postconnector.api.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.WebRequest;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidCredentialsException.class)
-    public ResponseEntity<ErrorObject> handleInvalidCredentialsException(InvalidCredentialsException ex, WebRequest request) {
+    public ResponseEntity<ErrorObject> handleInvalidCredentialsException(InvalidCredentialsException ex) {
         ErrorObject errorObject = ErrorObject.builder()
                 .code(HttpStatus.UNAUTHORIZED.value())
                 .message(ex.getMessage())
@@ -19,8 +21,18 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorObject, HttpStatus.UNAUTHORIZED);
     }
 
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorObject> handleBadCredentialsException(BadCredentialsException ex) {
+        ErrorObject errorObject = ErrorObject.builder()
+                .code(HttpStatus.UNAUTHORIZED.value())
+                .message("Thông tin đăng nhập không chính xác!")
+                .build();
+
+        return new ResponseEntity<>(errorObject, HttpStatus.UNAUTHORIZED);
+    }
+
     @ExceptionHandler(JwtValidationException.class)
-    public ResponseEntity<ErrorObject> handleJwtValidateException(JwtValidationException ex, WebRequest request) {
+    public ResponseEntity<ErrorObject> handleJwtValidateException(JwtValidationException ex) {
         ErrorObject errorObject = ErrorObject.builder()
                 .code(HttpStatus.UNAUTHORIZED.value())
                 .message(ex.getMessage())
@@ -30,7 +42,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ErrorObject> handleResourceNotFoundException(ResourceNotFoundException ex, WebRequest request) {
+    public ResponseEntity<ErrorObject> handleResourceNotFoundException(ResourceNotFoundException ex) {
         ErrorObject errorObject = ErrorObject.builder()
                 .code(HttpStatus.NOT_FOUND.value())
                 .message(ex.getMessage())
@@ -39,8 +51,18 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorObject, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(LockedException.class)
+    public ResponseEntity<ErrorObject> handleLockedException(LockedException ex) {
+        ErrorObject errorObject = ErrorObject.builder()
+                .code(HttpStatus.LOCKED.value())
+                .message("Tài khoản của bạn đã bị khóa!")
+                .build();
+
+        return new ResponseEntity<>(errorObject, HttpStatus.LOCKED);
+    }
+
     @ExceptionHandler(InternalServerErrorException.class)
-    public ResponseEntity<ErrorObject> handleInternalServerException(InternalServerErrorException ex, WebRequest request) {
+    public ResponseEntity<ErrorObject> handleInternalServerException(InternalServerErrorException ex) {
         ErrorObject errorObject = ErrorObject.builder()
                 .code(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .message(ex.getMessage())
@@ -74,14 +96,23 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorObject, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorObject> handleMethodArgumentNotValid(Exception ex) {
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorObject> handleAccessDeniedException(Exception ex) {
+        ErrorObject errorObject = ErrorObject.builder()
+                .code(HttpStatus.FORBIDDEN.value())
+                .message(ex.getMessage())
+                .build();
+
+        return new ResponseEntity<>(errorObject, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ErrorObject> handleRuntimeException(Exception ex) {
+        ex.printStackTrace();
         ErrorObject errorObject = ErrorObject.builder()
                 .code(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .message(ex.getMessage())
                 .build();
-
-        System.err.println(ex.toString());
 
         return new ResponseEntity<>(errorObject, HttpStatus.INTERNAL_SERVER_ERROR);
     }

@@ -1,67 +1,82 @@
 package org.kltn.postconnector.api.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import lombok.RequiredArgsConstructor;
+import org.kltn.postconnector.api.domain.Item;
 import org.kltn.postconnector.api.dto.ItemDTO;
-import org.kltn.postconnector.api.model.Item;
-import org.kltn.postconnector.api.model.Order;
-import org.kltn.postconnector.api.payload.response.ResponseObject;
+import org.kltn.postconnector.api.payload.response.PagedResponse;
 import org.kltn.postconnector.api.service.ItemService;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/item")
+@RequiredArgsConstructor
+@RequestMapping("/api/v1")
 public class ItemController {
     private final ItemService itemService;
 
-    public ItemController(ItemService itemService) {
-        this.itemService = itemService;
+    @GetMapping("/items")
+    @PreAuthorize("permitAll()")
+    public PagedResponse<Item> getPagedItems(
+            @RequestParam(name = "page", defaultValue = "1", required = false) @Min(1) int page,
+            @RequestParam(name = "keyword", defaultValue = "", required = false) String keyword,
+            @RequestParam(name = "catId", required = false) Integer catId) {
+        Page<Item> pagedItem = itemService.getPagedItem(page - 1, catId, keyword);
+
+        return PagedResponse.<Item>builder()
+                .total(pagedItem.getTotalElements())
+                .currentPage(pagedItem.getNumber() + 1)
+                .totalPage(pagedItem.getTotalPages())
+                .items(pagedItem.getContent()).build();
     }
 
-    @GetMapping()
-    public ResponseEntity<ResponseObject<List<Item>>> getAllItem() {
-        return ResponseEntity.ok(ResponseObject.<List<Item>>builder()
-                .code(HttpStatus.OK.value())
-                .data(itemService.getAll())
-                .build());
+
+    @GetMapping("/items/all")
+    @PreAuthorize("permitAll()")
+    public List<Item> getAllItem() {
+        return itemService.getAll();
     }
 
-    @GetMapping("{slug}")
-    public ResponseEntity<ResponseObject<Item>> getItem(@PathVariable(value = "slug") String slug) {
-        return ResponseEntity.ok(ResponseObject.<Item>builder()
-                .code(HttpStatus.OK.value())
-                .data(itemService.getBySlug(slug))
-                .build());
+    @GetMapping("/items/enable")
+    @PreAuthorize("isAuthenticated()")
+    public List<Item> getEnableItems() {
+        return itemService.getEnableItem();
     }
 
-    @PostMapping()
+    @GetMapping("/item/{id}")
+    @PreAuthorize("permitAll()")
+    public Item getItemById(@PathVariable(value = "id") int id) {
+        return itemService.getById(id);
+    }
+
+    @PostMapping("/item/create")
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<ResponseObject<?>> createItem(@Valid @ModelAttribute ItemDTO itemDTO) {
-        return ResponseEntity.ok(ResponseObject.<Item>builder()
-                .code(HttpStatus.CREATED.value())
-                .message("Thêm mặt hàng thành công!")
-                .data(itemService.create(itemDTO))
-                .build());
+    public Item createItem(@Valid @ModelAttribute ItemDTO itemDTO) {
+        return itemService.create(itemDTO);
     }
 
-    @PutMapping("{id}")
-    public ResponseEntity<ResponseObject<Item>> updateItem(@Valid @ModelAttribute ItemDTO itemDTO, @PathVariable("id") int id) {
-        return ResponseEntity.ok(ResponseObject.<Item>builder()
-                .code(HttpStatus.OK.value())
-                .message("Sửa mặt hàng thành công!")
-                .data(itemService.update(itemDTO, id))
-                .build());
+    @PutMapping("item/update/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
+    public Item updateItem(@Valid @ModelAttribute ItemDTO itemDTO, @PathVariable("id") int id) {
+        return itemService.update(itemDTO, id);
     }
 
-    @DeleteMapping("{id}")
-    public ResponseEntity<?> deleteItem(@PathVariable("id") int id) {
+    @PatchMapping("item/updateStock/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'KITCHEN')")
+    public Item updateStock(@PathVariable("id") int id,
+                            @RequestParam @Min(value = 0, message = "Giá trị tồn >= 0") int stock) {
+        return itemService.updateStock(stock, id);
+    }
+
+    @DeleteMapping("item/delete/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
+    public void deleteItem(@PathVariable("id") int id) {
         itemService.delete(id);
-        return ResponseEntity.ok(ResponseObject.<Order>builder()
-                .code(HttpStatus.OK.value())
-                .message("Xóa mặt hàng thành công!")
-                .build());
     }
 }

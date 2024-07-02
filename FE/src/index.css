@@ -1,27 +1,64 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-	html {
-		font-family: 'Inter', sans-serif;
-		line-height: 1.3;
-	}
-	table {
-	}
-	th,
-	td {
-		@apply py-3 px-2.5 text-sm text-left border-y border-gray-200;
-	}
-	thead {
-		@apply bg-neutral-100;
-	}
-	th {
-		@apply font-semibold;
-	}
-	a {
-		@apply text-sky-500 hover:underline;
-	}
+  html {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    height: 100%;
+  }
+}
+
+
+#root {
+  min-height: 100vh;
+  background-color: rgb(33, 40, 55);
+  color: rgb(235, 238, 244);
+  font-size: 14px;
+  line-height: 21px;
+  font-weight: 400;
+}
+
+/* Chrome, Edge, and Safari */
+*::-webkit-scrollbar {
+  width: 4px;
+  opacity: 0;
+}
+
+*::-webkit-scrollbar {
+  opacity: 1;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: transparent; 
+  border-radius: 15px;
+  border: 3px solid transparent;
+}
+
+*:hover::-webkit-scrollbar-thumb {
+  background: #b2b2b2; 
+  border-color: #b2b2b2;
+}
+
+input:focus {
+  outline: 1px solid #1f6bff;
+  box-shadow: 0 0 0 .25rem #1f6bff40;
+}
+
+.rdrStaticRange, .rdrInputRange {
+  color: #000;
+}
+
+.ag-theme-custom {
+  height: 500px; /* Thiết lập chiều cao co dãn */
+  width: 100%; /* Thiết lập chiều rộng co dãn */
+}
+
+.ag-theme-custom .ag-root-wrapper {
+  background-color: white; /* Đặt màu nền là màu trắng */
+}
+
+.apexcharts-tooltip {
+  background: #f3f3f3;
+  color: blue;
 }
